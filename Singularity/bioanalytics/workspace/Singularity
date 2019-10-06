@@ -1,0 +1,217 @@
+Bootstrap: docker
+From: ubuntu:bionic-20190307
+
+%environment
+
+LC_ALL=C
+export LC_ALL
+export JAVA_HOME=/usr/lib/jvm
+export HOME=/env
+export IGV_HOME=/opt/igv/IGV_2.6.3
+export TERM=xterm
+
+#  Not sure if we want to put everything in path, there could possibly be conflicts
+#  PATH="/opt:/usr/local/bcftools/bin:/usr/local/samtools/bin:/opt/samplot/src:$PATH"
+#  export PATH LC_ALL
+# https://github.com/ga4gh/benchmarking-tools/tree/master/resources/stratification-bed-files/GenomeSpecific
+
+%setup
+  # Creating convenience folders for runtime environment
+  mkdir -p ${SINGULARITY_ROOTFS}/workspace/bam
+  mkdir -p ${SINGULARITY_ROOTFS}/workspace/ref
+  mkdir -p ${SINGULARITY_ROOTFS}/workspace/fai
+  mkdir -p ${SINGULARITY_ROOTFS}/bam
+  mkdir -p ${SINGULARITY_ROOTFS}/ref
+  mkdir -p ${SINGULARITY_ROOTFS}/fastq
+  mkdir -p ${SINGULARITY_ROOTFS}/in
+  mkdir -p ${SINGULARITY_ROOTFS}/out
+  mkdir -p ${SINGULARITY_ROOTFS}/result
+  mkdir -p ${SINGULARITY_ROOTFS}/scratch
+  mkdir -p ${SINGULARITY_ROOTFS}/lib
+  mkdir -p ${SINGULARITY_ROOTFS}/vcf
+  mkdir -p ${SINGULARITY_ROOTFS}/bed
+  mkdir -p ${SINGULARITY_ROOTFS}/fasta
+  mkdir -p ${SINGULARITY_ROOTFS}/workdir
+  mkdir -p ${SINGULARITY_ROOTFS}/work
+  mkdir -p ${SINGULARITY_ROOTFS}/tmp2
+  mkdir -p ${SINGULARITY_ROOTFS}/giabSV
+  mkdir -p ${SINGULARITY_ROOTFS}/truvari
+  mkdir -p ${SINGULARITY_ROOTFS}/scripts/lumpy-sv
+  mkdir -p ${SINGULARITY_ROOTFS}/scripts/breakdancer
+  mkdir -p ${SINGULARITY_ROOTFS}/filters
+  mkdir -p ${SINGULARITY_ROOTFS}/usr/lib/jvm
+  mkdir -p ${SINGULARITY_ROOTFS}/jvmlibs
+  # Trying to create a generic environment and the leaky abstraction of Singularity home folder
+  mkdir -p ${SINGULARITY_ROOTFS}/env/.ammonite
+  mkdir -p ${SINGULARITY_ROOTFS}/env/.amm_jvm
+  mkdir -p ${SINGULARITY_ROOTFS}/env/.amm_jvm/home
+  mkdir -p ${SINGULARITY_ROOTFS}/env/.amm_jvm/user
+  mkdir -p ${SINGULARITY_ROOTFS}/env/.amm_jvm/system
+  mkdir -p ${SINGULARITY_ROOTFS}/env/.amm_jvm/scripts
+  mkdir -p ${SINGULARITY_ROOTFS}/env/.igv
+  mkdir -p ${SINGULARITY_ROOTFS}/env/.igv/user
+  mkdir -p ${SINGULARITY_ROOTFS}/env/.igv/system
+  mkdir -p ${SINGULARITY_ROOTFS}/env/.igv/home
+  mkdir -p ${SINGULARITY_ROOTFS}/env/.igv/scripts
+  mkdir -p ${SINGULARITY_ROOTFS}/opt/igv/IGV_2.6.3
+
+%files
+
+svmerger-master.tar.gz /opt
+requirements.txt /opt
+uber.jar /jvmlibs
+amm_header   /usr/local/bin/amm
+amm_prepared /usr/local/bin/amm_binary
+predef.sc /env/.ammonite/predef.sc
+AmmoniteSetup.sc /env/.amm_jvm/scripts
+igv_batch.sh /usr/local/bin/igv_batch.sh
+igv_init_env.sh /env/.igv/scripts
+
+%post
+
+export LANG=C.UTF-8
+export TERM=xterm
+export HOME=/env
+export IGV_HOME=/opt/igv/IGV_2.6.3
+
+apt-get update && apt-get install -y \
+  openjdk-8-jdk \
+  curl \
+  rsync \
+  unzip \
+  xvfb \
+  build-essential \
+  zlib1g-dev \
+  gzip \
+  wget \
+  python3 \
+  python3-pip \
+  git \
+  zlib1g-dev \
+  libcurl4-openssl-dev \
+  libssl-dev \
+  libbz2-dev \
+  liblzma-dev \
+  parallel \
+  autoconf \
+  libncurses5-dev \
+  bedtools \
+  default-jre \
+  perl \
+  perl-doc \
+  cpanminus \
+  libpng-dev \
+  libreoffice \
+  neovim
+
+export BINEXE=/usr/local/bin
+cd /opt
+
+########################## Ammonite ###############################
+# Setting up ammonite wasn't straight forward, so just copying a prepared binary in for now
+chmod +x $BINEXE/amm
+chmod +x $BINEXE/amm_binary
+amm --predef /env/.ammonite/predef.sc /env/.amm_jvm/scripts/AmmoniteSetup.sc 
+
+########################## Open JDK 11 for IGV ###############################
+cd /opt
+
+JDK="11+28"
+wget https://download.java.net/openjdk/jdk11/ri/openjdk-${JDK}_linux-x64_bin.tar.gz -O /tmp/openjdk.tar.gz
+cd /tmp
+tar xvf openjdk.tar.gz --directory /usr/lib/jvm
+rm /tmp/openjdk.tar.gz
+export JAVA_HOME=/usr/lib/jvm
+
+cd /opt
+
+########################## IGV ###############################
+IGV=2.6.3
+cd /opt
+
+# Making igv_batch script executable
+chmod +x /usr/local/bin/igv_batch.sh
+
+mkdir -p /opt/igv
+wget https://data.broadinstitute.org/igv/projects/downloads/2.6/IGV_${IGV}.zip -O IGV.zip
+unzip IGV.zip -d /opt/igv
+
+ln -s /opt/igv/IGV_2.6.3/igvtools /usr/local/bin/igvtools
+
+# Initialising igv, downloading reference genome and creating its environment
+igv_batch.sh /env/.igv/scripts/igv_init_env.sh 8
+
+
+#AMMONITE_VERSION=1.7.4
+#echo "#!/usr/bin/env sh" > /usr/local/bin/amm
+#sh -c '(echo "#!/usr/bin/env sh" && curl -L https://github.com/lihaoyi/Ammonite/releases/download/${AMMONITE_VERSION}/2.12-${AMMONITE_VERSION}) > /usr/local/bin/ammbin && chmod +x /usr/local/bin/ammbin'
+#curl -L https://github.com/lihaoyi/Ammonite/releases/download/${AMMONITE_VERSION}/2.12-${AMMONITE_VERSION} >> /usr/local/bin/amm
+#chmod +x /usr/local/bin/amm
+# amm /env/.amm_jvm/scripts/AmmoniteSetup.sc
+
+##########################################################
+# Setting Python defaults
+##########################################################
+
+update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+
+##########################################################
+# Installing samtools
+##########################################################
+SAMTOOLS_VERSION=1.9
+
+cd /opt \
+    && git clone https://github.com/samtools/htslib.git \
+    && cd /opt/htslib \
+    && git reset --hard 1832d3a1b75133e55fb6abffc3f50f8a6ed5ceae \
+    && make \
+    && make lib-static \
+    && make install
+
+cd /opt
+
+wget https://github.com/samtools/samtools/archive/${SAMTOOLS_VERSION}.tar.gz
+
+tar xvf ${SAMTOOLS_VERSION}.tar.gz
+mv samtools-* samtools
+cd samtools 
+mv ../htslib htslib
+autoheader
+autoconf -Wno-syntax
+./configure
+make
+make install
+
+cd /opt
+########################## VCF NORMALIZER ###############################
+
+cd /opt
+pip install -r requirements.txt
+
+cd /opt
+git clone https://github.com/talkowski-lab/svtk.git
+cd svtk
+git fetch --all
+git checkout 594a667a7bd79e00241d3b527945dadde8775e8d .
+pip install -e .
+
+cd /opt
+tar xvfz svmerger-master.tar.gz
+rm svmerger-master.tar.gz
+cd svmerger-master
+python setup.py sdist
+pip install -U dist/svmerger-0.0.1.tar.gz
+
+cd /opt
+git clone https://github.com/ryanlayer/samplot.git
+cd samplot
+pip install -e .
+
+
+########################## Installing bedGraphToBigWig ###########################
+cd /opt
+
+mkdir -p /opt/ucsc
+cd /opt/ucsc
+rsync -a -P rsync://hgdownload.soe.ucsc.edu/genome/admin/exe/linux.x86_64/ ./

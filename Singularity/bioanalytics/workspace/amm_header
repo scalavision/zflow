@@ -1,0 +1,5 @@
+#!/bin/bash
+set -euo pipefail
+echo "launching ammonite"
+/usr/local/bin/amm_binary --predef /env/.ammonite/predef.sc "$0" "$@"
+#!
