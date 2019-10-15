@@ -12,7 +12,7 @@ object JobExecutor {
   trait Service {
 
     def generateSlurmScript(
-      job: Job, 
+      job: SlurmJob, 
       sampleName: SampleName, 
       workdir: os.Path,
       config: SlurmConfig

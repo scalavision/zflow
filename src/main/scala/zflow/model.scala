@@ -97,9 +97,16 @@ object model {
 
   sealed abstract class BioFile extends CmdArg
   case class Bam(value: FilePath) extends BioFile with PathTerminator
+  case class Cram(value: FilePath) extends BioFile with PathTerminator
   case class Ref(value: FilePath) extends BioFile with PathTerminator
+  case class FastQ(value: FilePath) extends BioFile with PathTerminator
+  
   case class BamFileName(value: FileName) extends BioFile
   case class BamFolder(value: FolderPath) extends BioFile
+  case class CramFileName(value: FileName) extends BioFile
+  case class CramFolder(value: FolderPath) extends BioFile
+  case class FastQFileName(value: FileName) extends BioFile
+  case class FastQFolder(value: FolderPath) extends BioFile
   case class RefFileName(value: FileName) extends BioFile
   case class RefFolder(value: FolderPath) extends BioFile
   

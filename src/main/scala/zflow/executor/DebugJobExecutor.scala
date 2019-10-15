@@ -1,6 +1,7 @@
 package zflow.executor
 
 import zflow.model._
+import zflow.slurm.SlurmTemplate
 import zio._
 
 trait DebugJobExecutor extends JobExecutor {
@@ -15,7 +16,12 @@ trait DebugJobExecutor extends JobExecutor {
 
       val jobFolder = workdir / s"${sampleName}" / s"${job.jobName}"
       val jobPath = jobFolder / s"${job.jobName}.slurm"
-      val slurm = SlurmTemplate.create(config, FolderPath(workdir.toString()), job.cmds)
+      val slurm = SlurmTemplate.create(
+        config, 
+        FolderPath(workdir.toString()), 
+        job.cmds
+      )
+      println("script that would be written to disk\n" + slurm)
       SlurmScript(jobPath, jobFolder)
     }
 

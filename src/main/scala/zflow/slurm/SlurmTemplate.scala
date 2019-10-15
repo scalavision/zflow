@@ -4,7 +4,7 @@ import zflow.model._
 
 object SlurmTemplate {
 
-  def createScript(b: Bash): String = {
+  def createScript(b: SBash): String = {
     s"""|#!/bin/bash
   |set -euo pipefail
   |${b.script}
@@ -17,7 +17,8 @@ object SlurmTemplate {
     cmds
       .map {
         case Cmd(v) => v.mkString(" ")
-        case Bash(_, name, startScript) =>
+        case Bash(_,_,_) => ""
+        case SBash(_, name, startScript, _) =>
           s"""|echo "Launching script"
       |chmod +x $$SCRATCH/workdir/${name}.sh
       |$startScript
@@ -33,7 +34,8 @@ object SlurmTemplate {
     cmds
       .map {
         case Cmd(_) => ""
-        case Bash(_, name, _) =>
+        case Bash(_,_,_) => ""
+        case SBash(_, name, _, _) =>
           s"cp ${scriptFolder.value}/${name}.sh $$SCRATCH/workdir"
       }
       .filter(_.nonEmpty)
@@ -43,7 +45,7 @@ object SlurmTemplate {
   def create(
       config: SlurmConfig,
       scriptDir: FolderPath,
-      cmds: List[Cmd]
+      cmds: List[Command]
   ) =
     s"""|#!/bin/bash
     |# Job name:
