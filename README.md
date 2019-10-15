@@ -11,3 +11,5 @@ Albeight, you can run the test and see the commands that will run in the pipelin
 Instead of print out, you could write the script to disk and run it (os-lib makes this really easy)
 
 * https://github.com/lihaoyi/os-lib
+
+Have a look at the SlurmTemplate to generate a `slurm` script for convenience.
