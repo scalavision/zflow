@@ -1,6 +1,6 @@
 # zflow
 
-Basic helper methods to quickly build somewhat typesafe pipelines in Scala
+Basic helper methods to quickly build somewhat typesafe pipelines in Scala using pure functional concepts (still wip though)
 
 At the moment, you can only build typesafe bashscripts. There are features to submit bash scripts to slurm cluster, but this is still in development.
 
