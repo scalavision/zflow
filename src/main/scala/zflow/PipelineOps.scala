@@ -11,12 +11,7 @@ case class Step(
 )
 
 trait PipelineOps {
-
-  def create: State[Step, Step] = for {
-    _ <- init
-    p <- get
-  } yield p
-
+  
   def addStep(cmd: Cmd, out: List[PathOps]): Step => Step = 
     pipeline => pipeline.copy(
       cmds = pipeline.cmds :+ cmd,
