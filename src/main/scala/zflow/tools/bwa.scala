@@ -13,4 +13,16 @@ object bwa {
     read2: FastQ
   ) = cmd"$bwa mem $ref $read1 $read2"
 
+  def mapInMemory(
+    ref: Ref,
+    read1: FastQ,
+    read2: FastQ,
+    header: String,
+    cores: Int
+  ) = {
+    val hdr = arg"$header"
+    val crs = arg"$cores"
+    cmd"$bwa mem -R $hdr -M -t $crs $ref $read1 $read2"
+  }
+  
 }
