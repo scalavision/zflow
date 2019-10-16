@@ -18,9 +18,12 @@ object samtools {
     bam: Bam,
   ) = cmd"$samtools index -b $bam"
 
-  def sortFromStdIn(
+  def pipeToSort(
     out: Bam
   ) = cmd"$samtools sort -o $out -"
-
+  
+  // Streams from StdIn, autodetects input format
+  // outputs stream s bam to StdOut
+  def pipeToBam = cmd"$samtools -Sb -"   
   
 }
