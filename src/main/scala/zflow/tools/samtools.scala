@@ -25,5 +25,9 @@ object samtools {
   // Streams from StdIn, autodetects input format
   // outputs stream s bam to StdOut
   def pipeToBam = cmd"$samtools -Sb -"   
-  
+ 
+ def indexRef(
+   ref: Ref
+ ) = cmd"$samtools faidx $ref"
+ 
 }
