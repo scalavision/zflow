@@ -25,4 +25,8 @@ object bwa {
     cmd"$bwa mem -R $hdr -M -t $crs $ref $read1 $read2"
   }
   
+  def indexRef(
+    ref: Ref
+  ) = cmd"$bwa index $ref"
+  
 }
